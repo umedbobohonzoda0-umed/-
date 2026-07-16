@@ -23,7 +23,9 @@ import {
   Gift,
   Settings,
   Bell,
-  Mic
+  Mic,
+  MessageSquare,
+  Upload
 } from 'lucide-react';
 import { Product, CartItem, Order, Category } from './types';
 
@@ -236,33 +238,33 @@ const PRODUCTS: Product[] = [
   // Сертификаты
   {
     id: 'cr-1',
-    name: 'Подарочный сертификат на 3000 ₽',
+    name: 'Подарочный сертификат на 3000 смн',
     category: 'certificates',
     price: 3000,
     image: 'https://images.unsplash.com/photo-1589758438368-0ad531db3366?auto=format&fit=crop&w=400&q=80',
     rating: 5.0,
     reviewsCount: 210,
-    description: 'Электронный сертификат номиналом 3000 рублей. Отличный способ дать получателю возможность самому выбрать идеальный подарок в нашем каталоге.'
+    description: 'Электронный сертификат номиналом 3000 сомони. Отличный способ дать получателю возможность самому выбрать идеальный подарок в нашем каталоге.'
   },
   {
     id: 'cr-2',
-    name: 'Подарочный сертификат на 5000 ₽',
+    name: 'Подарочный сертификат на 5000 смн',
     category: 'certificates',
     price: 5000,
     image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=400&q=80',
     rating: 5.0,
     reviewsCount: 145,
-    description: 'Подарочный сертификат номиналом 5000 рублей. Приходит моментально на email в красивом праздничном оформлении с вашим персональным пожеланием.'
+    description: 'Подарочный сертификат номиналом 5000 сомони. Приходит моментально на email в красивом праздничном оформлении с вашим персонажным пожеланием.'
   },
   {
     id: 'cr-3',
-    name: 'Подарочный сертификат на 10000 ₽',
+    name: 'Подарочный сертификат на 10000 смн',
     category: 'certificates',
     price: 10000,
     image: 'https://images.unsplash.com/photo-1557200134-90327ee9fafa?auto=format&fit=crop&w=400&q=80',
     rating: 5.0,
     reviewsCount: 88,
-    description: 'Премиальный электронный сертификат на сумму 10000 рублей. Позволит заказать роскошную авторскую корзину цветов, комнатное дерево или набор сладостей.'
+    description: 'Премиальный электронный сертификат на сумму 10000 сомони. Позволит заказать роскошную авторскую корзину цветов, комнатное дерево или набор сладостей.'
   }
 ];
 
@@ -272,7 +274,7 @@ export default function App() {
   // ==========================================
   const [activeTab, setActiveTab] = useState<'home' | 'catalog' | 'cart' | 'profile'>('catalog');
   const [deliveryOption, setDeliveryOption] = useState<'delivery' | 'pickup'>('delivery');
-  const [address, setAddress] = useState('Москва, Центральный пр. Хорошёвский, д. 12');
+  const [address, setAddress] = useState('Душанбе, проспект Рудаки, д. 45');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -292,7 +294,7 @@ export default function App() {
       ],
       total: 3490,
       status: 'delivered',
-      address: 'Москва, Центральный пр. Хорошёвский, д. 12',
+      address: 'Душанбе, проспект Рудаки, д. 45',
       deliveryOption: 'delivery'
     }
   ]);
@@ -305,8 +307,20 @@ export default function App() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [tempAddress, setTempAddress] = useState(address);
 
+  // Profile state and editing controls
+  const [userName, setUserName] = useState('Umed Bobohonzoda');
+  const [userPhone, setUserPhone] = useState('+992 (999) 123-45-67');
+  const [userAvatar, setUserAvatar] = useState('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80');
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [tempName, setTempName] = useState('Umed Bobohonzoda');
+  const [tempPhone, setTempPhone] = useState('+992 (999) 123-45-67');
+  const [tempAvatar, setTempAvatar] = useState('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80');
+
   // Simulated GPS Courier coordinate for tracking screen
   const [courierProgress, setCourierProgress] = useState(0);
+
+  // Custom florist notes ("Написать" feature)
+  const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
 
   // ==========================================
   // EFFECT FOR SIMULATED LIVE TRACKING PROGRESS
@@ -429,6 +443,44 @@ export default function App() {
     setActiveTab('profile'); // Switch to profile to track active order
   };
 
+  const handleDirectOrder = (product: Product, size?: string) => {
+    const finalProduct = size ? { ...product, selectedSize: size } : product;
+    
+    // Calculate price of this single item order
+    const itemSubtotal = product.price;
+    const itemDiscount = Math.round((itemSubtotal * appliedDiscount) / 100);
+    const itemDelivery = deliveryOption === 'pickup' ? 0 : itemSubtotal > 3000 ? 0 : 250;
+    const itemTotal = itemSubtotal - itemDiscount + itemDelivery;
+
+    const newOrder: Order = {
+      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+      date: new Date().toLocaleDateString('ru-RU'),
+      items: [{ product: finalProduct, quantity: 1 }],
+      total: itemTotal,
+      status: 'pending',
+      address: address,
+      deliveryOption: deliveryOption
+    };
+
+    setActiveOrder(newOrder);
+    setTrackingStep(0);
+    setCourierProgress(0);
+    setOrders(prev => [newOrder, ...prev]);
+    setCart([]); // Reset cart
+    setPromoCode('');
+    setAppliedDiscount(0);
+    setActiveTab('profile'); // Switch to profile to track active order
+    setSelectedProduct(null); // Close details modal if open
+  };
+
+  const getGoodsWord = (count: number) => {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'товар';
+    if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'товара';
+    return 'товаров';
+  };
+
   // ==========================================
   // FILTERS & SEARCH
   // ==========================================
@@ -460,7 +512,7 @@ export default function App() {
             {/* Notification Bell with red dot */}
             <button 
               onClick={() => {
-                alert('У вас нет новых уведомлений');
+                alert('Шумо огоҳиҳои нав надоред');
               }}
               className="relative text-slate-800 hover:text-purple-600 transition-colors p-1 cursor-pointer"
             >
@@ -513,11 +565,11 @@ export default function App() {
         </div>
 
         {/* Super compact Delivery Toggle & Address Selector */}
-        <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-slate-50">
-          <div className="bg-[#f3f4f6] p-0.5 rounded-xl flex items-center shrink-0">
+        <div className="flex items-center justify-between gap-4 pt-2.5 pb-1 border-t border-slate-50">
+          <div className="bg-[#f3f4f6] p-0.5 rounded-2xl flex items-center shrink-0">
             <button
               onClick={() => setDeliveryOption('delivery')}
-              className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all cursor-pointer ${
+              className={`px-4 py-1.5 text-[12px] font-black rounded-xl transition-all cursor-pointer ${
                 deliveryOption === 'delivery'
                   ? 'bg-white text-slate-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-700'
@@ -527,7 +579,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setDeliveryOption('pickup')}
-              className={`px-3 py-1 text-[10px] font-black rounded-lg transition-all cursor-pointer ${
+              className={`px-4 py-1.5 text-[12px] font-black rounded-xl transition-all cursor-pointer ${
                 deliveryOption === 'pickup'
                   ? 'bg-white text-slate-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-700'
@@ -542,13 +594,13 @@ export default function App() {
               setTempAddress(address);
               setIsAddressModalOpen(true);
             }}
-            className="flex items-center gap-1.5 text-left hover:opacity-85 transition-opacity overflow-hidden"
+            className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity overflow-hidden"
           >
-            <MapPin className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-            <span className="text-[11px] font-bold text-slate-600 truncate max-w-[150px]">
-              {deliveryOption === 'delivery' ? address : 'Пункт выдачи: Хорошёвский пр-д, 12'}
+            <MapPin className="w-[17px] h-[17px] text-purple-600 shrink-0" />
+            <span className="text-[13.5px] font-bold text-slate-600 truncate max-w-[190px]">
+              {deliveryOption === 'delivery' ? address : 'Пункт выдачи: Душанбе, ул. Айни, д. 15'}
             </span>
-            <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
           </button>
         </div>
       </div>
@@ -645,7 +697,7 @@ export default function App() {
                           </h4>
                           <div className="flex justify-between items-center mt-2 pt-1 border-t border-slate-50">
                             <span className="text-xs font-black text-slate-900 font-mono">
-                              {prod.price} ₽
+                              {prod.price} смн
                             </span>
                             <button
                               onClick={(e) => {
@@ -762,7 +814,7 @@ export default function App() {
                                 </h4>
                                 <div className="flex justify-between items-center pt-1 border-t border-slate-50 mt-2">
                                   <span className="text-xs font-black text-slate-900 font-mono">
-                                    {prod.price} ₽
+                                    {prod.price} смн
                                   </span>
                                   
                                   {quantityInCart > 0 ? (
@@ -874,11 +926,17 @@ export default function App() {
                                   Размер: {item.product.selectedSize}
                                 </span>
                               )}
+                              {customNotes[item.product.id] && (
+                                <div className="text-[9px] text-slate-500 font-semibold mt-1 bg-slate-50 p-1 rounded-md border border-slate-100 flex items-start gap-1.5 max-w-[200px]">
+                                  <MessageSquare className="w-2.5 h-2.5 text-purple-500 shrink-0 mt-0.5" />
+                                  <span className="truncate italic">«{customNotes[item.product.id]}»</span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex justify-between items-center mt-1">
                               <span className="text-xs font-black text-slate-900 font-mono">
-                                {item.product.price * item.quantity} ₽
+                                {item.product.price * item.quantity} смн
                               </span>
 
                               <div className="flex items-center bg-slate-50 border border-slate-100 rounded-lg">
@@ -936,24 +994,24 @@ export default function App() {
                     <div className="bg-[#f5f5f7] rounded-2xl p-4 space-y-2.5">
                       <div className="flex justify-between text-xs font-bold text-slate-500">
                         <span>Товары ({cart.reduce((sum, i) => sum + i.quantity, 0)} шт)</span>
-                        <span className="font-mono">{cartSubtotal} ₽</span>
+                        <span className="font-mono">{cartSubtotal} смн</span>
                       </div>
                       
                       {appliedDiscount > 0 && (
                         <div className="flex justify-between text-xs font-bold text-emerald-600">
                           <span>Скидка ({appliedDiscount}%)</span>
-                          <span className="font-mono">-{discountAmount} ₽</span>
+                          <span className="font-mono">-{discountAmount} смн</span>
                         </div>
                       )}
 
                       <div className="flex justify-between text-xs font-bold text-slate-500">
                         <span>Способ доставки: {deliveryOption === 'delivery' ? 'Курьер' : 'Самовывоз'}</span>
-                        <span className="font-mono">{deliveryFee === 0 ? 'Бесплатно' : `${deliveryFee} ₽`}</span>
+                        <span className="font-mono">{deliveryFee === 0 ? 'Бесплатно' : `${deliveryFee} смн`}</span>
                       </div>
 
                       <div className="border-t border-slate-200 pt-2.5 flex justify-between items-center">
                         <span className="text-xs font-black text-slate-800">Итого</span>
-                        <span className="text-base font-black text-purple-700 font-mono">{cartTotal} ₽</span>
+                        <span className="text-base font-black text-purple-700 font-mono">{cartTotal} смн</span>
                       </div>
                     </div>
 
@@ -964,7 +1022,7 @@ export default function App() {
                         <span className="text-xs font-black text-purple-800 block">Условия доставки</span>
                         <p className="text-[10px] text-purple-600 font-bold mt-0.5">
                           {deliveryOption === 'delivery' 
-                            ? 'Доставка осуществляется в течение 30-50 минут. Бесплатно при заказе от 3000 ₽.'
+                            ? 'Доставка осуществляется в течение 30-50 минут. Бесплатно при заказе от 3000 смн.'
                             : 'Вы можете забрать ваш заказ в любое удобное время с 09:00 до 21:00.'}
                         </p>
                       </div>
@@ -975,7 +1033,7 @@ export default function App() {
                       onClick={handleCheckout}
                       className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3.5 rounded-[18px] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer hover:shadow"
                     >
-                      <span>Оформить заказ на {cartTotal} ₽</span>
+                      <span>Оформить заказ на {cartTotal} смн</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -993,14 +1051,31 @@ export default function App() {
                 className="space-y-5"
               >
                 {/* User Info */}
-                <div className="flex items-center gap-4 bg-white border border-slate-100 p-4 rounded-[24px] shadow-xs">
-                  <div className="w-12 h-12 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                    <UserIcon className="w-6 h-6 text-purple-600" />
+                <div 
+                  onClick={() => {
+                    setTempName(userName);
+                    setTempPhone(userPhone);
+                    setTempAvatar(userAvatar);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="flex items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-[24px] shadow-xs hover:border-purple-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="w-12 h-12 rounded-full border border-purple-100 flex items-center justify-center shrink-0 overflow-hidden bg-purple-50">
+                      {userAvatar ? (
+                        <img src={userAvatar} alt={userName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <UserIcon className="w-6 h-6 text-purple-600" />
+                      )}
+                    </div>
+                    <div className="overflow-hidden">
+                      <h2 className="text-sm font-black text-slate-800 truncate">{userName}</h2>
+                      <span className="text-[10px] text-slate-400 font-bold block mt-0.5">{userPhone}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-sm font-black text-slate-800">Umed Bobohonzoda</h2>
-                    <span className="text-[10px] text-slate-400 font-bold block mt-0.5">+7 (999) 123-45-67</span>
-                  </div>
+                  <button className="text-purple-600 hover:text-purple-700 font-black text-[11px] bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl transition-all shrink-0 cursor-pointer">
+                    Иваз кардан
+                  </button>
                 </div>
 
                 {/* Simulated Live Order Tracker (Displays when user checkout) */}
@@ -1019,7 +1094,7 @@ export default function App() {
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-black text-purple-400 font-mono">
-                          {activeOrder.total} ₽
+                          {activeOrder.total} смн
                         </span>
                         <span className="text-[9px] text-slate-400 font-bold block mt-0.5">30-50 мин</span>
                       </div>
@@ -1078,7 +1153,7 @@ export default function App() {
                             <span className={`text-[11px] font-black ${trackingStep >= 2 ? 'text-white' : 'text-slate-500'}`}>
                               Курьер уже в пути
                             </span>
-                            <span className="text-[9px] text-slate-400 block mt-0.5">Доставка на Хорошёвский пр-д</span>
+                            <span className="text-[9px] text-slate-400 block mt-0.5">Доставка на проспект Рудаки</span>
                           </div>
                         </div>
                       </div>
@@ -1175,14 +1250,14 @@ export default function App() {
                         {ord.items.map((it, idx) => (
                           <div key={idx} className="flex justify-between text-xs font-bold text-slate-600">
                             <span className="truncate max-w-[70%]">{it.product.name} (x{it.quantity})</span>
-                            <span className="font-mono text-slate-900">{it.product.price * it.quantity} ₽</span>
+                            <span className="font-mono text-slate-900">{it.product.price * it.quantity} смн</span>
                           </div>
                         ))}
                       </div>
 
                       <div className="border-t border-slate-50 pt-2.5 flex justify-between items-center text-xs">
                         <span className="font-black text-slate-800">Итоговая стоимость</span>
-                        <span className="font-black text-purple-700 font-mono">{ord.total} ₽</span>
+                        <span className="font-black text-purple-700 font-mono">{ord.total} смн</span>
                       </div>
                     </div>
                   ))}
@@ -1192,6 +1267,34 @@ export default function App() {
 
           </AnimatePresence>
         </div>
+
+        {/* Floating Fast-Checkout/Order banner above bottom navigation bar */}
+        <AnimatePresence>
+          {cart.length > 0 && activeTab !== 'cart' && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.95 }}
+              className="fixed bottom-[72px] left-4 right-4 bg-purple-600 text-white px-4 py-3 rounded-2xl flex items-center justify-between shadow-xl z-40 border border-purple-500"
+            >
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black uppercase text-purple-200">Добавлено</span>
+                <span className="text-xs font-black">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)} {getGoodsWord(cart.reduce((sum, item) => sum + item.quantity, 0))}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveTab('cart');
+                }}
+                className="bg-white text-purple-700 hover:bg-purple-50 font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                <span>Заказать за {cartTotal} смн</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5px]" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ==========================================
             DYNAMIC BOTTOM TAB NAVIGATION
@@ -1307,9 +1410,9 @@ export default function App() {
                   <div className="space-y-2">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Быстрый выбор</span>
                     {[
-                      'Москва, Центральный пр. Хорошёвский, д. 12',
-                      'Москва, ул. Ленина, д. 45, кв. 89',
-                      'Москва, Кутузовский проспект, д. 10',
+                      'Душанбе, проспект Рудаки, д. 45',
+                      'Худжанд, ул. Ленина, д. 78',
+                      'Бохтар, ул. Айни, д. 5',
                     ].map((addr) => (
                       <button
                         key={addr}
@@ -1335,6 +1438,182 @@ export default function App() {
                   >
                     Сохранить адрес
                   </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* ==========================================
+            EDIT PROFILE BOTTOM DRAWER / MODAL
+            ========================================== */}
+        <AnimatePresence>
+          {isProfileModalOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsProfileModalOpen(false)}
+                className="absolute inset-0 bg-black z-50"
+              />
+              {/* Drawer Content */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[28px] p-5 space-y-4 z-50 max-h-[85%] overflow-y-auto shadow-2xl"
+              >
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <h3 className="text-sm font-black text-slate-800">Маълумоти шахсӣ</h3>
+                  <button
+                    onClick={() => setIsProfileModalOpen(false)}
+                    className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Avatar Picker Section */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                      Интихоби Акс (Аватар)
+                    </label>
+                    
+                    {/* Active Avatar Preview with Device Gallery Uploader */}
+                    <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <div className="w-14 h-14 rounded-full border border-purple-200 overflow-hidden shrink-0 bg-white flex items-center justify-center">
+                        {tempAvatar ? (
+                          <img src={tempAvatar} alt="Превью" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <UserIcon className="w-7 h-7 text-purple-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <div>
+                          <span className="text-xs font-black text-slate-700 block">Акси ҳозира</span>
+                          <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Аз галерея бор кунед ё аз аксҳои поён интихоб намоед</span>
+                        </div>
+                        
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-xl cursor-pointer transition-all">
+                          <Upload className="w-3.5 h-3.5 text-purple-600" />
+                          <span className="text-[10.5px] font-black text-purple-700">Интихоб аз галерея</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  if (typeof reader.result === 'string') {
+                                    setTempAvatar(reader.result);
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Presets Grid */}
+                    <div className="grid grid-cols-5 gap-2 pt-1">
+                      {[
+                        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80',
+                        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
+                        'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&h=150&q=80',
+                        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80',
+                        'https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?auto=format&fit=crop&w=150&h=150&q=80'
+                      ].map((presetUrl, idx) => {
+                        const isSelected = tempAvatar === presetUrl;
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => setTempAvatar(presetUrl)}
+                            className={`w-12 h-12 rounded-full overflow-hidden border-2 relative transition-all cursor-pointer ${
+                              isSelected ? 'border-purple-600 scale-105 shadow-md' : 'border-transparent hover:border-purple-200'
+                            }`}
+                          >
+                            <img src={presetUrl} className="w-full h-full object-cover animate-fade-in" referrerPolicy="no-referrer" />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-purple-600/30 flex items-center justify-center">
+                                <Check className="w-4 h-4 text-white stroke-[3px]" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Custom URL Input Option */}
+                    <div className="pt-1.5">
+                      <span className="text-[9px] text-slate-400 font-bold block mb-1">Ё суроғаи акси дигар (URL):</span>
+                      <input
+                        type="text"
+                        value={tempAvatar}
+                        onChange={(e) => setTempAvatar(e.target.value)}
+                        placeholder="Суроғаи аксро инҷо гузоред..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Name Input */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                      Ном (Ному насаб)
+                    </label>
+                    <input
+                      type="text"
+                      value={tempName}
+                      onChange={(e) => setTempName(e.target.value)}
+                      placeholder="Номи худро ворид кунед"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    />
+                  </div>
+
+                  {/* Phone Input */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                      Номер (Телефон)
+                    </label>
+                    <input
+                      type="text"
+                      value={tempPhone}
+                      onChange={(e) => setTempPhone(e.target.value)}
+                      placeholder="Номерро ворид кунед"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        if (!tempName.trim()) {
+                          alert('Лутфан номи худро ворид кунед');
+                          return;
+                        }
+                        if (!tempPhone.trim()) {
+                          alert('Лутфан номери телефони худро ворид кунед');
+                          return;
+                        }
+                        setUserName(tempName);
+                        setUserPhone(tempPhone);
+                        setUserAvatar(tempAvatar);
+                        setIsProfileModalOpen(false);
+                      }}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3.5 rounded-xl shadow-xs transition-colors cursor-pointer"
+                    >
+                      Сабт кардани маълумот
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </>
@@ -1395,7 +1674,7 @@ export default function App() {
                         {selectedProduct.name}
                       </h2>
                       <div className="text-lg font-black text-purple-700 font-mono pt-1">
-                        {selectedProduct.price} ₽
+                        {selectedProduct.price} смн
                       </div>
                     </div>
 
@@ -1429,32 +1708,54 @@ export default function App() {
                       </p>
                     </div>
 
-                    {/* Guarantees Box */}
-                    <div className="bg-slate-50 rounded-2xl p-3.5 space-y-2 border border-slate-100">
+                    {/* Guarantees Box replaced with Naписать box */}
+                    <div className="bg-slate-50 rounded-2xl p-3.5 space-y-2.5 border border-slate-100">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                        <Sparkles className="w-4 h-4 text-purple-500" />
-                        <span>Гарантия свежести и качества</span>
+                        <MessageSquare className="w-4 h-4 text-purple-500" />
+                        <span>Написать пожелание флористу</span>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
-                        Все цветы и сладости собираются индивидуально за 1 час до доставки. Делаем бесплатное фото готового букета перед отправкой курьером.
-                      </p>
+                      <div className="space-y-2">
+                        <textarea
+                          value={customNotes[selectedProduct.id] || ''}
+                          onChange={(e) => setCustomNotes(prev => ({ ...prev, [selectedProduct.id]: e.target.value }))}
+                          placeholder="Напишите здесь свои пожелания к заказу (например, цвет ленты, текст записки или время)..."
+                          className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-400 min-h-[60px] resize-none font-semibold leading-relaxed shadow-xs"
+                        />
+                        {customNotes[selectedProduct.id] && (
+                          <div className="flex items-center gap-1.5 text-[9px] font-black text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg w-fit border border-purple-100">
+                            <Check className="w-3 h-3 stroke-[3px]" />
+                            <span>Сохранено! Пожелание добавлено к заказу</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Bottom Action Footer */}
                 <div className="p-5 border-t border-slate-100 bg-white">
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5">
                     <button
                       onClick={() => {
                         const sizeToUse = selectedProduct.selectedSize || selectedProduct.sizeOptions?.[0];
                         addToCart(selectedProduct, sizeToUse);
                         setSelectedProduct(null);
                       }}
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3 rounded-[16px] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer hover:shadow"
+                      className="flex-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 font-black text-xs py-3.5 rounded-[16px] transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <ShoppingBag className="w-4.5 h-4.5" />
-                      <span>В корзину за {selectedProduct.price} ₽</span>
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>В корзину</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const sizeToUse = selectedProduct.selectedSize || selectedProduct.sizeOptions?.[0];
+                        handleDirectOrder(selectedProduct, sizeToUse);
+                      }}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3.5 rounded-[16px] shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg"
+                    >
+                      <Check className="w-4 h-4 stroke-[3px]" />
+                      <span>Заказать ({selectedProduct.price} смн)</span>
                     </button>
                   </div>
                 </div>
